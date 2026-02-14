@@ -1,0 +1,17 @@
+collection:
+  log_prompts: false
+  log_tool_details: false
+
+exporters:
+  local:
+    enabled: true
+
+resource_attributes:
+  deployment.environment: local
+
+custom_metrics:
+  - name: codex_events_total
+    description: "Count of Codex CLI log events"
+    attributes:
+      - key: event_name
+        default_value: "unknown"

@@ -1,0 +1,17 @@
+collection:
+  log_prompts: false
+  log_tool_details: false
+
+exporters:
+  local:
+    enabled: false
+  otlp_http:
+    enabled: true
+    endpoint: "https://otel.example.com:4318"
+    headers:
+      Authorization: "Bearer my-token"
+      X-Custom-Header: "custom-value"
+    insecure: false
+
+resource_attributes:
+  deployment.environment: staging

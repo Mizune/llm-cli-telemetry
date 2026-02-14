@@ -1,0 +1,27 @@
+collection:
+  log_prompts: true
+  log_tool_details: true
+
+exporters:
+  local:
+    enabled: true
+
+user:
+  email: "test@example.com"
+  team: "backend"
+
+resource_attributes:
+  deployment.environment: local
+
+local_logs:
+  claude_code:
+    enabled: true
+    collect:
+      - history
+      - tool_debug
+      - context
+  codex_cli:
+    enabled: true
+    collect:
+      - sessions
+      - history

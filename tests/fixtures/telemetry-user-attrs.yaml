@@ -1,0 +1,15 @@
+collection:
+  log_prompts: false
+  log_tool_details: false
+
+exporters:
+  local:
+    enabled: true
+
+user:
+  email: "dev@example.com"
+  team: "platform"
+
+resource_attributes:
+  deployment.environment: development
+  service.version: "1.0.0"

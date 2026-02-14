@@ -1,0 +1,15 @@
+collection:
+  log_prompts: false
+  log_tool_details: false
+
+exporters:
+  local:
+    enabled: false
+  grafana_cloud:
+    enabled: true
+    endpoint: "https://otlp-gateway-prod-us-central-0.grafana.net/otlp"
+    instance_id: "123456"
+    api_key: "glc_test_key"
+
+resource_attributes:
+  deployment.environment: production
