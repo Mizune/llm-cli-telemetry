@@ -38,13 +38,16 @@ Run the full observability stack locally with Docker.
 # 2. Reload shell
 source ~/.zshrc   # or: source ~/.bashrc
 
-# 3. Start the stack
+# 3. Copy environment variables (optional, auto-copied on start)
+cp .env.example .env
+
+# 4. Start the stack
 ./start.sh
 
-# 4. Open Grafana
+# 5. Open Grafana
 open http://localhost:3001  # admin / admin
 
-# 5. Use CLI tools normally - telemetry is automatic
+# 6. Use CLI tools normally - telemetry is automatic
 claude "What is 2+2?"
 ```
 
@@ -294,7 +297,7 @@ llm-cli-telemetry/
 ├── uninstall.sh                     # Remove integration + restore configs
 ├── docker-compose.yml               # Service definitions
 ├── docker-compose.override.yml      # Generated: local log volume mounts
-├── .env                             # Environment variables
+├── .env.example                     # Environment variables template (cp to .env)
 ├── .setup-mode                      # Generated: setup state (mode|protocol|endpoint)
 ├── telemetry.example.yaml           # Configuration template
 ├── telemetry.yaml                   # Your config (gitignored)

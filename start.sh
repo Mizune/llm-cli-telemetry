@@ -22,6 +22,13 @@ if [[ -f "${PROJECT_DIR}/telemetry.yaml" ]]; then
 fi
 
 cd "${PROJECT_DIR}"
+
+# Copy .env.example to .env if not present
+if [[ ! -f ".env" ]] && [[ -f ".env.example" ]]; then
+  info "Creating .env from .env.example ..."
+  cp ".env.example" ".env"
+fi
+
 docker compose up -d
 
 echo ""

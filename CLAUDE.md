@@ -26,6 +26,7 @@ Telemetry collection stack for **Claude Code**, **Codex CLI**, and **Gemini CLI*
 | `scripts/install.sh` | Interactive setup: mode selection, prerequisites, CLI configs |
 | `scripts/uninstall.sh` | Remove shell integration, restore configs from .bak |
 | `scripts/generate.sh` | `telemetry.yaml` -> collector-config.yaml + docker-compose.override.yml |
+| `.env.example` | Environment variables template (Grafana creds, OTEL endpoint) |
 | `.setup-mode` | Generated: setup state (mode\|protocol\|endpoint\|headers) |
 | `telemetry.example.yaml` | User config template (copied to telemetry.yaml on install) |
 | `otel-collector/collector-config.yaml` | Generated OTEL Collector pipeline config |

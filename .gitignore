@@ -1,3 +1,6 @@
+# Environment variables (copy from .env.example)
+.env
+
 # User-specific config (generated from telemetry.example.yaml)
 telemetry.yaml
 
