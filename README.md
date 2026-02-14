@@ -374,7 +374,7 @@ If ports are already in use, stop conflicting services or modify port mappings i
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and guidelines.
 
 ## License
 
