@@ -1,0 +1,63 @@
+# === llm-cli-telemetry Configuration ===
+# Copy to telemetry.yaml and customize.
+# Run `make generate` after changes to regenerate collector config.
+
+# === Data Collection Settings ===
+collection:
+  # Include prompt content in logs (privacy-sensitive)
+  log_prompts: false
+  # Include tool execution details in logs
+  log_tool_details: false
+
+# === Export Destinations ===
+exporters:
+  # Local observability stack (Prometheus/Loki/Tempo/Grafana)
+  local:
+    enabled: true
+  # Grafana Cloud
+  grafana_cloud:
+    enabled: false
+    endpoint: ""       # e.g. https://otlp-gateway-prod-us-central-0.grafana.net/otlp
+    instance_id: ""
+    api_key: ""
+  # Any OTLP HTTP endpoint
+  otlp_http:
+    enabled: false
+    endpoint: ""       # e.g. https://otel.example.com:4318
+    headers: {}        # e.g. { "Authorization": "Bearer xxx" }
+    insecure: false
+
+# === User Identification (for multi-user environments) ===
+user:
+  email: ""            # e.g. "you@example.com" (added as user.email resource attribute)
+  # team: ""           # e.g. "backend-team" (added as user.team resource attribute)
+
+# === Resource Attributes ===
+resource_attributes:
+  deployment.environment: local
+
+# === Custom Metrics (log-to-metric conversion via count connector) ===
+custom_metrics:
+  - name: codex_events_total
+    description: "Count of Codex CLI log events"
+    attributes:
+      - key: event_name
+        default_value: "unknown"
+
+# === Local Log Collection ===
+# Collect additional data from CLI tool local log files.
+# Requires volume mounts in docker-compose (auto-generated).
+local_logs:
+  claude_code:
+    enabled: false
+    collect:
+      - history      # Conversation history (history.jsonl)
+      - tool_debug   # Tool execution logs including diffs (post-tool-debug.log)
+      - context      # Context window consumption (current.json)
+  codex_cli:
+    enabled: false
+    collect:
+      - sessions     # Session data (sessions/**/*.jsonl)
+      - history      # Prompt history (history.jsonl)
+  gemini_cli:
+    enabled: false   # Gemini CLI has minimal local logs
