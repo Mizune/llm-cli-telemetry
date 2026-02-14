@@ -1,0 +1,206 @@
+{
+  "uid": "tool-comparison",
+  "title": "Tool Comparison",
+  "description": "Compare telemetry across Claude Code, Codex CLI, and Gemini CLI",
+  "tags": ["llm-telemetry", "comparison"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 3,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Event Activity",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Event Activity by Tool",
+      "description": "Log event count across all tools (Loki-based, works for all CLI tools)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (service_name) (count_over_time({service_name=~\".+\"}[5m]))",
+          "legendFormat": "{{service_name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20,
+            "pointSize": 5,
+            "showPoints": "auto"
+          },
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean", "max"] } }
+    },
+    {
+      "id": 3,
+      "type": "row",
+      "title": "Token Usage (Claude Code + Gemini)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "collapsed": false
+    },
+    {
+      "id": 4,
+      "type": "barchart",
+      "title": "Total Tokens by Tool",
+      "description": "Token metrics from Claude Code and Gemini CLI",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (type) (claude_code_token_usage_tokens_total)",
+          "legendFormat": "Claude Code {{type}}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "sum by (gen_ai_token_type) (gen_ai_client_token_usage_sum{service_name=\"gemini-cli\"})",
+          "legendFormat": "Gemini {{gen_ai_token_type}}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "fillOpacity": 80 },
+          "color": { "mode": "palette-classic" },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "barWidth": 0.7,
+        "groupWidth": 0.7,
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 5,
+      "type": "barchart",
+      "title": "Input vs Output Tokens",
+      "description": "Input/output token breakdown from Claude Code and Gemini CLI",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(claude_code_token_usage_tokens_total{type=\"input\"})",
+          "legendFormat": "Claude Code input",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "sum(claude_code_token_usage_tokens_total{type=\"output\"})",
+          "legendFormat": "Claude Code output",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "sum(gen_ai_client_token_usage_sum{service_name=\"gemini-cli\", gen_ai_token_type=\"input\"})",
+          "legendFormat": "Gemini input",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "sum(gen_ai_client_token_usage_sum{service_name=\"gemini-cli\", gen_ai_token_type=\"output\"})",
+          "legendFormat": "Gemini output",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "fillOpacity": 80 },
+          "color": { "mode": "palette-classic" },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "orientation": "vertical",
+        "barWidth": 0.7,
+        "groupWidth": 0.7,
+        "stacking": "normal",
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "Efficiency (Claude Code)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "collapsed": false
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Input/Output Token Ratio (Claude Code)",
+      "description": "Ratio of input to output tokens. Only Claude Code emits token metrics.",
+      "gridPos": { "h": 4, "w": 12, "x": 0, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(claude_code_token_usage_tokens_total{type=\"input\"}) / sum(claude_code_token_usage_tokens_total{type=\"output\"})",
+          "legendFormat": "I/O Ratio"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          },
+          "color": { "mode": "thresholds" },
+          "unit": "short",
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Estimated Cost (Claude Code)",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(claude_code_cost_usage_USD_total)",
+          "legendFormat": "Cost"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          },
+          "color": { "mode": "thresholds" },
+          "unit": "currencyUSD",
+          "noValue": "$0.00"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    }
+  ]
+}
