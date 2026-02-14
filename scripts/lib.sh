@@ -8,7 +8,9 @@
 # Derive PROJECT_DIR from this file's own location (always scripts/../).
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SETUP_MODE_FILE="${PROJECT_DIR}/.setup-mode"
+# shellcheck disable=SC2034  # Used by scripts that source this file
 MARKER_BEGIN="# >>> llm-cli-telemetry >>>"
+# shellcheck disable=SC2034
 MARKER_END="# <<< llm-cli-telemetry <<<"
 
 # --- Log functions ---
