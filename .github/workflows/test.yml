@@ -49,5 +49,7 @@ jobs:
       - name: Run bats tests
         run: make test-bats
 
+      # Legacy tests require Docker (headless local mode checks prerequisites)
       - name: Run legacy tests
+        if: runner.os == 'Linux'
         run: make test-legacy
