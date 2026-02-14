@@ -1,6 +1,12 @@
 # llm-cli-telemetry
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Shell](https://img.shields.io/badge/Shell-Bash-green.svg)](https://www.gnu.org/software/bash/)
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-enabled-blue.svg)](https://opentelemetry.io/)
+
 Collect and visualize telemetry from **Claude Code**, **OpenAI Codex CLI**, and **Google Gemini CLI** using OpenTelemetry, Prometheus, Loki, Tempo, and Grafana.
+
+> **Disclaimer:** This is an independent, community-driven project and is not affiliated with, endorsed by, or sponsored by Anthropic, OpenAI, or Google.
 
 ## Architecture
 
@@ -365,3 +371,11 @@ source ~/.zshrc   # or: source ~/.bashrc
 ### Port conflicts
 
 If ports are already in use, stop conflicting services or modify port mappings in `docker-compose.yml`.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
