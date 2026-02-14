@@ -1,5 +1,6 @@
 # llm-cli-telemetry
 
+[![CI](https://github.com/Mizune/llm-cli-telemetry/actions/workflows/test.yml/badge.svg)](https://github.com/Mizune/llm-cli-telemetry/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Shell](https://img.shields.io/badge/Shell-Bash-green.svg)](https://www.gnu.org/software/bash/)
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-enabled-blue.svg)](https://opentelemetry.io/)
