@@ -1,0 +1,12 @@
+groups:
+  - name: llm_telemetry
+    interval: 30s
+    rules:
+      - record: claude_code:cache_hit_rate
+        expr: >
+          sum(claude_code_token_usage_tokens_total{type="cacheRead"})
+          / clamp_min(
+              sum(claude_code_token_usage_tokens_total{type="input"})
+              + sum(claude_code_token_usage_tokens_total{type="cacheRead"}),
+              1
+            ) * 100

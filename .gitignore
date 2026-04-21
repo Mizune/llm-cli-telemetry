@@ -16,3 +16,5 @@ otel-collector/collector-config.yaml
 
 # Serena MCP tool config
 .serena/
+.diffelens.local.yaml
+.diffelens.polish-skill.md
