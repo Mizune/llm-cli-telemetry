@@ -8,7 +8,13 @@ source "${SCRIPT_DIR}/scripts/lib.sh"
 
 MODE=$(read_setup_mode)
 
-if [[ -n "${MODE}" ]] && [[ "${MODE}" != "local" ]]; then
+if [[ -z "${MODE}" ]]; then
+  info "No setup detected. Running setup in local mode..."
+  "${SCRIPT_DIR}/setup.sh" --mode local
+  MODE=$(read_setup_mode)
+fi
+
+if [[ "${MODE}" != "local" ]]; then
   warn "Setup mode is '${MODE}' - the local Docker stack is not needed."
   warn "Telemetry is sent directly to: $(read_setup_endpoint)"
   warn ""
