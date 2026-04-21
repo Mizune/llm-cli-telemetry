@@ -523,11 +523,13 @@ configure_codex() {
   local codex_exporter="otlp-grpc"
   local codex_log_endpoint="${codex_endpoint}"
   local codex_trace_endpoint="${codex_endpoint}"
+  local codex_metrics_endpoint="${codex_endpoint}"
   if [[ "${PROTOCOL}" == "http" ]]; then
     codex_exporter="otlp-http"
-    # otlp-http requires signal-specific paths in the endpoint
+    # otlp-http requires signal-specific paths per OTLP HTTP spec
     codex_log_endpoint="${codex_endpoint}/v1/logs"
     codex_trace_endpoint="${codex_endpoint}/v1/traces"
+    codex_metrics_endpoint="${codex_endpoint}/v1/metrics"
   fi
 
   local codex_environment="${MODE}"
@@ -537,6 +539,7 @@ configure_codex() {
 [otel]
 environment = "${codex_environment}"
 log_user_prompt = ${codex_log_prompts}
+metrics_exporter = "${codex_exporter}"
 
 [otel.exporter."${codex_exporter}"]
 endpoint = "${codex_log_endpoint}"
@@ -544,6 +547,10 @@ protocol = "binary"
 
 [otel.trace_exporter."${codex_exporter}"]
 endpoint = "${codex_trace_endpoint}"
+protocol = "binary"
+
+[otel.metrics_exporter."${codex_exporter}"]
+endpoint = "${codex_metrics_endpoint}"
 protocol = "binary"
 TOML
   info "Configured Codex CLI [otel] section (endpoint: ${codex_endpoint}, exporter: ${codex_exporter})"

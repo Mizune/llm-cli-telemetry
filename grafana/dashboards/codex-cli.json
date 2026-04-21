@@ -1,11 +1,11 @@
 {
   "uid": "codex-cli",
   "title": "Codex CLI",
-  "description": "OpenAI Codex CLI telemetry – logs, traces, and derived metrics",
+  "description": "OpenAI Codex CLI telemetry – token usage, performance, and tool activity",
   "tags": ["llm-telemetry", "codex-cli"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -23,11 +23,11 @@
       "id": 2,
       "type": "stat",
       "title": "Total Events",
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 1 },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "count_over_time({service_name=\"codex_exec\"}[$__range])",
+          "expr": "count_over_time({service_name=~\"codex_cli_rs|codex_exec\"}[$__range])",
           "legendFormat": "Events",
           "refId": "A"
         }
@@ -43,118 +43,279 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "API Requests",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
-      "datasource": { "type": "loki", "uid": "loki" },
+      "title": "Token Usage",
+      "description": "Total tokens consumed across all turns",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "count_over_time({service_name=\"codex_exec\"} |= \"api_request\" [$__range])",
-          "legendFormat": "API Requests",
-          "refId": "A"
+          "expr": "sum(codex_turn_token_usage_total{service_name=~\"codex_cli_rs|codex_exec\"})",
+          "legendFormat": "Tokens"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "thresholds": { "steps": [{ "color": "green", "value": null }] },
-          "color": { "mode": "thresholds" }
+          "color": { "mode": "thresholds" },
+          "unit": "short",
+          "noValue": "N/A"
         }
       },
-      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } }
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
     {
       "id": 4,
       "type": "stat",
-      "title": "Tool Decisions",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
-      "datasource": { "type": "loki", "uid": "loki" },
+      "title": "Tool Calls",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "count_over_time({service_name=\"codex_exec\"} |= \"tool_decision\" [$__range])",
-          "legendFormat": "Tool Decisions",
-          "refId": "A"
+          "expr": "sum(codex_tool_call_total{service_name=~\"codex_cli_rs|codex_exec\"})",
+          "legendFormat": "Tool Calls"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "thresholds": { "steps": [{ "color": "orange", "value": null }] },
-          "color": { "mode": "thresholds" }
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
         }
       },
-      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["sum"] } }
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
     {
       "id": 5,
-      "type": "row",
-      "title": "Events",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
-      "collapsed": false
-    },
-    {
-      "id": 6,
-      "type": "timeseries",
-      "title": "Events Over Time",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "type": "stat",
+      "title": "API Requests",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (event_name) (rate(codex_events_total[5m]))",
-          "legendFormat": "{{event_name}}"
+          "expr": "sum(codex_api_request_total{service_name=~\"codex_cli_rs|codex_exec\"})",
+          "legendFormat": "API Requests"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "fillOpacity": 20,
-            "pointSize": 5,
-            "showPoints": "auto",
-            "stacking": { "mode": "normal" }
-          },
-          "unit": "short",
-          "color": { "mode": "palette-classic" }
+          "thresholds": { "steps": [{ "color": "purple", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
         }
       },
-      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] } }
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
     {
-      "id": 7,
+      "id": 6,
       "type": "row",
-      "title": "Traces",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "title": "Performance",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
       "collapsed": false
     },
     {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Turn Duration (E2E)",
+      "description": "End-to-end turn duration percentiles",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(codex_turn_e2e_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(codex_turn_e2e_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(codex_turn_e2e_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10 },
+          "unit": "ms"
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } }
+    },
+    {
       "id": 8,
+      "type": "timeseries",
+      "title": "Time to First Token (TTFT)",
+      "description": "How quickly the first token arrives",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(codex_turn_ttft_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(codex_turn_ttft_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10 },
+          "unit": "ms"
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Tool Call Duration",
+      "description": "Tool execution time percentiles",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(codex_tool_call_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(codex_tool_call_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10 },
+          "unit": "ms"
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "API Request Duration",
+      "description": "API call latency percentiles",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(codex_api_request_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(codex_api_request_duration_ms_bucket{service_name=~\"codex_cli_rs|codex_exec\"}[5m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10 },
+          "unit": "ms"
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } }
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Ecosystem",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "collapsed": false
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Skills Enabled",
+      "description": "Double _total suffix is expected: OTEL metric codex.thread.skills.enabled_total + Prometheus counter suffix",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(codex_thread_skills_enabled_total_total{service_name=~\"codex_cli_rs|codex_exec\"})", "legendFormat": "Enabled" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "green", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Hooks Executed",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(codex_hooks_run_total{service_name=~\"codex_cli_rs|codex_exec\"})", "legendFormat": "Hooks" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "orange", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Plugin Syncs",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(codex_plugins_startup_sync_total{service_name=~\"codex_cli_rs|codex_exec\"})", "legendFormat": "Syncs" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "purple", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Traces",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "collapsed": false
+    },
+    {
+      "id": 16,
       "type": "traces",
       "title": "Trace Explorer",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 15 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
       "datasource": { "type": "tempo", "uid": "tempo" },
       "targets": [
         {
           "queryType": "traceql",
-          "query": "{resource.service.name = \"codex_exec\"}",
+          "query": "{resource.service.name =~ \"codex_cli_rs|codex_exec\"}",
           "limit": 20,
           "refId": "A"
         }
       ]
     },
     {
-      "id": 9,
+      "id": 17,
       "type": "row",
       "title": "Logs",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
       "collapsed": false
     },
     {
-      "id": 10,
+      "id": 18,
       "type": "logs",
       "title": "Event Logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 24 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 37 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{service_name=\"codex_exec\"}",
+          "expr": "{service_name=~\"codex_cli_rs|codex_exec\"}",
           "refId": "A"
         }
       ],

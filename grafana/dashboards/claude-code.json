@@ -1,11 +1,11 @@
 {
   "uid": "claude-code",
   "title": "Claude Code",
-  "description": "Claude Code telemetry details",
+  "description": "Claude Code telemetry – cost efficiency, productivity, and token usage",
   "tags": ["llm-telemetry", "claude-code"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -15,78 +15,15 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Overview",
+      "title": "Cost & Efficiency",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Input Tokens",
+      "title": "Total Cost",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum(claude_code_token_usage_tokens_total{type=\"input\"})",
-          "legendFormat": "Input"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "steps": [{ "color": "blue", "value": null }] },
-          "color": { "mode": "thresholds" },
-          "unit": "short"
-        }
-      },
-      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
-    },
-    {
-      "id": 3,
-      "type": "stat",
-      "title": "Output Tokens",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum(claude_code_token_usage_tokens_total{type=\"output\"})",
-          "legendFormat": "Output"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "steps": [{ "color": "orange", "value": null }] },
-          "color": { "mode": "thresholds" },
-          "unit": "short"
-        }
-      },
-      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
-    },
-    {
-      "id": 4,
-      "type": "stat",
-      "title": "Cache Read Tokens",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "expr": "sum(claude_code_token_usage_tokens_total{type=\"cacheRead\"})",
-          "legendFormat": "Cache Read"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": { "steps": [{ "color": "green", "value": null }] },
-          "color": { "mode": "thresholds" },
-          "unit": "short"
-        }
-      },
-      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
-    },
-    {
-      "id": 5,
-      "type": "stat",
-      "title": "Estimated Cost",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -105,6 +42,74 @@
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
     },
     {
+      "id": 3,
+      "type": "stat",
+      "title": "Cost per Session",
+      "description": "Average cost per session",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(claude_code_cost_usage_USD_total) / clamp_min(sum(claude_code_session_count_total), 1)",
+          "legendFormat": "$/session"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 2 }] },
+          "color": { "mode": "thresholds" },
+          "unit": "currencyUSD",
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Cache Hit Rate",
+      "description": "Cache read tokens / (input + cache read). Higher = better cost efficiency.",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "claude_code:cache_hit_rate",
+          "legendFormat": "Cache Hit %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 30 }, { "color": "green", "value": 60 }] },
+          "color": { "mode": "thresholds" },
+          "unit": "percent",
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Cost by Model",
+      "description": "Cost breakdown per model",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (model) (claude_code_cost_usage_USD_total)",
+          "legendFormat": "{{model}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 10 }] },
+          "unit": "currencyUSD",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" }
+    },
+    {
       "id": 6,
       "type": "row",
       "title": "Token Usage",
@@ -113,9 +118,82 @@
     },
     {
       "id": 7,
+      "type": "stat",
+      "title": "Input Tokens",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_token_usage_tokens_total{type=\"input\"})", "legendFormat": "Input" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "blue", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "unit": "short"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Output Tokens",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_token_usage_tokens_total{type=\"output\"})", "legendFormat": "Output" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "orange", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "unit": "short"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Cache Read Tokens",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_token_usage_tokens_total{type=\"cacheRead\"})", "legendFormat": "Cache Read" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "green", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "unit": "short"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Active Time",
+      "description": "Total active session time",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_active_time_seconds_total)", "legendFormat": "Active Time" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "purple", "value": null }] },
+          "color": { "mode": "thresholds" },
+          "unit": "dtdurations"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 11,
       "type": "timeseries",
       "title": "Token Usage Over Time",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -143,45 +221,157 @@
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] } }
     },
     {
-      "id": 8,
-      "type": "row",
-      "title": "Cost",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
-      "collapsed": false
-    },
-    {
-      "id": 9,
+      "id": 12,
       "type": "timeseries",
       "title": "Cost Over Time",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 15 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(rate(claude_code_cost_usage_USD_total[5m]))",
-          "legendFormat": "Cost (USD/s)"
+          "expr": "sum by (model) (rate(claude_code_cost_usage_USD_total[5m]))",
+          "legendFormat": "{{model}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20 },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "stacking": { "mode": "normal" } },
           "unit": "currencyUSD",
-          "color": { "fixedColor": "red", "mode": "fixed" }
+          "color": { "mode": "palette-classic" }
         }
       },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] } }
     },
     {
-      "id": 10,
+      "id": 13,
       "type": "row",
-      "title": "Details",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "title": "Productivity",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
       "collapsed": false
     },
     {
-      "id": 11,
+      "id": 14,
+      "type": "stat",
+      "title": "Sessions",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_session_count_total)", "legendFormat": "Sessions" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "blue", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Commits",
+      "gridPos": { "h": 4, "w": 5, "x": 4, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_commit_total)", "legendFormat": "Commits" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "green", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Pull Requests",
+      "gridPos": { "h": 4, "w": 5, "x": 9, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_pull_request_total)", "legendFormat": "PRs" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "purple", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Lines of Code",
+      "gridPos": { "h": 4, "w": 5, "x": 14, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_lines_of_code_total)", "legendFormat": "LOC" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "orange", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Code Edits",
+      "gridPos": { "h": 4, "w": 5, "x": 19, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(claude_code_code_edit_tool_total)", "legendFormat": "Edits" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "semi-dark-yellow", "value": null }] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Productivity Over Time",
+      "description": "Commits, PRs, code edits, and lines of code over time",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(claude_code_commit_total[5m]))", "legendFormat": "Commits" },
+        { "expr": "sum(rate(claude_code_pull_request_total[5m]))", "legendFormat": "Pull Requests" },
+        { "expr": "sum(rate(claude_code_code_edit_tool_total[5m]))", "legendFormat": "Code Edits" },
+        { "expr": "sum(rate(claude_code_lines_of_code_total[5m]))", "legendFormat": "Lines of Code" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10,
+            "pointSize": 5,
+            "showPoints": "auto"
+          },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] } }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Details",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "collapsed": false
+    },
+    {
+      "id": 21,
       "type": "table",
       "title": "Token Usage by Model & Session",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -196,17 +386,51 @@
       ]
     },
     {
-      "id": 12,
+      "id": 22,
       "type": "row",
-      "title": "Logs",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "title": "Ecosystem",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
       "collapsed": false
     },
     {
-      "id": 13,
+      "id": 23,
+      "type": "timeseries",
+      "title": "Skill & Plugin Activity",
+      "description": "Skill activations and plugin installations from Claude Code events",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 41 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} |= \"skill_activated\" [5m]))",
+          "legendFormat": "Skill Activations",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"claude-code\"} |= \"plugin_installed\" [5m]))",
+          "legendFormat": "Plugin Installs",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "pointSize": 5 },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] } }
+    },
+    {
+      "id": 24,
+      "type": "row",
+      "title": "Logs",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 49 },
+      "collapsed": false
+    },
+    {
+      "id": 25,
       "type": "logs",
       "title": "Event Logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 33 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 50 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {

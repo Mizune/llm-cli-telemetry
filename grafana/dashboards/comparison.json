@@ -1,11 +1,11 @@
 {
   "uid": "tool-comparison",
   "title": "Tool Comparison",
-  "description": "Compare telemetry across Claude Code, Codex CLI, and Gemini CLI",
+  "description": "Compare cost, performance, and usage across Claude Code, Codex CLI, and Gemini CLI",
   "tags": ["llm-telemetry", "comparison"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -23,7 +23,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Event Activity by Tool",
-      "description": "Log event count across all tools (Loki-based, works for all CLI tools)",
+      "description": "Log event rate across all tools (Loki-based)",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 1 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
@@ -35,13 +35,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "fillOpacity": 20,
-            "pointSize": 5,
-            "showPoints": "auto"
-          },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "pointSize": 5, "showPoints": "auto" },
           "unit": "short",
           "color": { "mode": "palette-classic" }
         }
@@ -51,7 +45,7 @@
     {
       "id": 3,
       "type": "row",
-      "title": "Token Usage (Claude Code + Gemini)",
+      "title": "Token Usage",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
       "collapsed": false
     },
@@ -59,7 +53,7 @@
       "id": 4,
       "type": "barchart",
       "title": "Total Tokens by Tool",
-      "description": "Token metrics from Claude Code and Gemini CLI",
+      "description": "Token breakdown: Claude Code (input/output/cache) vs Gemini (input/output) vs Codex (turn tokens)",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -72,6 +66,12 @@
         {
           "expr": "sum by (gen_ai_token_type) (gen_ai_client_token_usage_sum{service_name=\"gemini-cli\"})",
           "legendFormat": "Gemini {{gen_ai_token_type}}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "sum(codex_turn_token_usage_total)",
+          "legendFormat": "Codex tokens",
           "format": "table",
           "instant": true
         }
@@ -94,7 +94,7 @@
       "id": 5,
       "type": "barchart",
       "title": "Input vs Output Tokens",
-      "description": "Input/output token breakdown from Claude Code and Gemini CLI",
+      "description": "Input/output breakdown across tools",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
@@ -141,32 +141,26 @@
     {
       "id": 6,
       "type": "row",
-      "title": "Efficiency (Claude Code)",
+      "title": "Efficiency & Cost",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
       "collapsed": false
     },
     {
       "id": 7,
       "type": "stat",
-      "title": "Input/Output Token Ratio (Claude Code)",
-      "description": "Ratio of input to output tokens. Only Claude Code emits token metrics.",
-      "gridPos": { "h": 4, "w": 12, "x": 0, "y": 19 },
+      "title": "I/O Ratio (Claude Code)",
+      "description": "Input-to-output token ratio. Lower = more efficient output generation.",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(claude_code_token_usage_tokens_total{type=\"input\"}) / sum(claude_code_token_usage_tokens_total{type=\"output\"})",
+          "expr": "sum(claude_code_token_usage_tokens_total{type=\"input\"}) / clamp_min(sum(claude_code_token_usage_tokens_total{type=\"output\"}), 1)",
           "legendFormat": "I/O Ratio"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 10 }
-            ]
-          },
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 10 }] },
           "color": { "mode": "thresholds" },
           "unit": "short",
           "noValue": "N/A"
@@ -177,8 +171,31 @@
     {
       "id": 8,
       "type": "stat",
-      "title": "Estimated Cost (Claude Code)",
-      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 19 },
+      "title": "I/O Ratio (Gemini)",
+      "description": "Input-to-output token ratio for Gemini CLI",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(gen_ai_client_token_usage_sum{service_name=\"gemini-cli\", gen_ai_token_type=\"input\"}) / clamp_min(sum(gen_ai_client_token_usage_sum{service_name=\"gemini-cli\", gen_ai_token_type=\"output\"}), 1)",
+          "legendFormat": "I/O Ratio"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 10 }] },
+          "color": { "mode": "thresholds" },
+          "unit": "short",
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Total Cost (Claude Code)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 19 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -188,19 +205,58 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "red", "value": 10 }
-            ]
-          },
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 10 }] },
           "color": { "mode": "thresholds" },
           "unit": "currencyUSD",
           "noValue": "$0.00"
         }
       },
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Cache Hit Rate (Claude Code)",
+      "description": "Higher = better cost efficiency",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "claude_code:cache_hit_rate",
+          "legendFormat": "Cache %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 30 }, { "color": "green", "value": 60 }] },
+          "color": { "mode": "thresholds" },
+          "unit": "percent",
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Cost Over Time (Claude Code)",
+      "description": "Cost rate trend – only Claude Code emits cost metrics",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (model) (rate(claude_code_cost_usage_USD_total[5m]))",
+          "legendFormat": "{{model}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "stacking": { "mode": "normal" } },
+          "unit": "currencyUSD",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] } }
     }
   ]
 }
